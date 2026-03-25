@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coach Pro - 学习发现</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-dark': '#121212',
+                        'bg-panel': '#1e1e1e',
+                        'primary-green': '#00ff88', /* 赛博霓虹绿 (Primary) */
+                        'secondary-blue': '#00ccff',
+                        'danger-red': '#ff4d4d',
+                        'warning-yellow': '#ffc107',
+                        'text-main': '#ffffff',
+                        'text-sub': '#a0a0a0',
+                        'border-color': '#333333',
+                    },
+                    fontFamily: {
+                        inter: ['Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            /* 统一深色背景和字体 */
+            body { @apply bg-bg-dark text-text-main font-inter; }
+
+            /* 侧边栏/顶栏 */
+            .sidebar-bg { @apply bg-bg-panel fixed h-full top-0 left-0 w-64 overflow-y-auto z-20 border-r border-border-color; }
+            .header-bg { @apply bg-bg-panel shadow-lg fixed top-0 left-0 right-0 z-30 border-b border-border-color; }
+
+            /* 统一导航样式 (模拟 index.html 的左侧栏) */
+            .sidebar-item { @apply flex items-center px-4 py-3 text-text-sub hover:text-primary-green transition-colors duration-200 border-l-4 border-transparent; }
+            .sidebar-item-active { @apply text-primary-green bg-primary-green/10 border-primary-green; }
+
+            /* 卡片样式 (模拟 index.html 的 stat-card) */
+            .card-style { @apply bg-bg-panel rounded-xl shadow-lg border border-border-color transition-shadow duration-300; }
+            .card-hover { @apply hover:shadow-xl hover:border-primary-green transform hover:-translate-y-0.5; }
+
+            /* 下拉菜单 */
+            .dropdown-menu { @apply absolute right-0 mt-2 w-48 bg-bg-panel rounded-md shadow-lg py-1 z-50 hidden border border-border-color; }
+            .dropdown-menu-item { @apply block px-4 py-2 text-sm text-text-sub hover:bg-primary-green/10 hover:text-primary-green; }
+
+            /* 视频分类卡片样式调整 */
+            .category-card-content { @apply p-5; }
+            .back-btn { @apply bg-bg-panel border border-border-color hover:bg-border-color text-text-sub hover:text-text-main px-4 py-2 rounded-lg transition-colors flex items-center; }
+        }
+    </style>
+</head>
+<body class="font-inter bg-bg-dark min-h-screen flex">
+    <aside class="sidebar-bg hidden lg:block pt-5">
+        <div class="text-center mb-5">
+            <h4 class="text-xl font-bold text-text-main"><i class="fas fa-robot mr-2 text-secondary-blue"></i>AI Coach Pro</h4>
+            <small class="text-text-sub text-sm">v2.0.5 Ultimate</small>
+        </div>
+        <nav class="space-y-1 mt-6">
+            <a href="home.html" class="sidebar-item">
+                <i class="fas fa-home text-lg w-6 text-center"></i>
+                <span class="ml-3">首页</span>
+            </a>
+            <a href="index.html" class="sidebar-item">
+                <i class="fas fa-chart-line text-lg w-6 text-center"></i>
+                <span class="ml-3">运动分析</span>
+            </a>
+            <a href="learning.html" class="sidebar-item sidebar-item-active">
+                <i class="fas fa-book text-lg w-6 text-center"></i>
+                <span class="ml-3">学习发现</span>
+            </a>
+            <a href="profile.html" class="sidebar-item">
+                <i class="fas fa-user-circle text-lg w-6 text-center"></i>
+                <span class="ml-3">个人中心</span>
+            </a>
+        </nav>
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-9xl text-white/5 rotate-12">
+            <i class="fas fa-table-tennis"></i>
+        </div>
+    </aside>
+
+    <div class="flex-1 lg:ml-64 p-4 md:p-8 pt-20">
+        <header class="header-bg lg:hidden">
+            <div class="flex items-center justify-between p-3">
+                <div class="flex items-center">
+                    <button id="mobileMenuBtn" class="text-text-main mr-3"><i class="fas fa-bars text-xl"></i></button>
+                    <h1 class="text-lg font-bold text-text-main">AI Coach Pro</h1>
+                </div>
+                <div class="flex items-center" id="userDropdown">
+                    <img src="https://picsum.photos/40/40" alt="用户头像" class="w-8 h-8 rounded-full object-cover border-2 border-primary-green/40">
+                    <button id="dropdownToggle" class="ml-1 text-text-sub hover:text-text-main">
+                        <i class="fas fa-angle-down"></i>
+                    </button>
+                    <div id="dropdownMenu" class="dropdown-menu">
+                        <a href="profile.html" class="dropdown-menu-item">个人中心</a>
+                        <a href="#" id="logoutBtn" class="dropdown-menu-item">退出登录</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container mx-auto">
+            <div class="mb-8">
+                <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-text-main">
+                    <i class="fas fa-book text-primary-green mr-2"></i>学习发现
+                </h2>
+                <p class="text-text-sub mt-1">浏览各类网球动作教学视频，学习专业技术要领</p>
+            </div>
+
+            <h3 class="text-xl font-bold text-text-main mb-4">
+                <i class="fas fa-th-large text-primary-green mr-2"></i>动作分类
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="card-style card-hover overflow-hidden cursor-pointer" data-category="serve">
+                    <div class="h-48 bg-cover bg-center relative" style="background-image: url('images/serve-cover.png')">
+                        <div class="video-info-badge absolute bottom-2 right-2 bg-black/70 text-white text-sm px-3 py-1 rounded">
+                            <i class="fas fa-play-circle mr-1"></i>3个视频
+                        </div>
+                    </div>
+                    <div class="category-card-content">
+                        <h4 class="text-lg font-bold text-text-main mb-1">发球</h4>
+                        <p class="text-text-sub text-sm">包括平击发球、上旋发球和切削发球等技术视频</p>
+                    </div>
+                </div>
+
+                <div class="card-style card-hover overflow-hidden cursor-pointer" data-category="forehand">
+                    <div class="h-48 bg-cover bg-center relative" style="background-image: url('images/forehand-cover.jpg')">
+                        <div class="video-info-badge absolute bottom-2 right-2 bg-black/70 text-white text-sm px-3 py-1 rounded">
+                            <i class="fas fa-play-circle mr-1"></i>2个视频
+                        </div>
+                    </div>
+                    <div class="category-card-content">
+                        <h4 class="text-lg font-bold text-text-main mb-1">正拍</h4>
+                        <p class="text-text-sub text-sm">包括开放式、半开放式和关闭式正拍击球技术</p>
+                    </div>
+                </div>
+
+                <div class="card-style card-hover overflow-hidden cursor-pointer" data-category="backhand">
+                    <div class="h-48 bg-cover bg-center relative" style="background-image: url('images/backhand-cover.jpg')">
+                        <div class="video-info-badge absolute bottom-2 right-2 bg-black/70 text-white text-sm px-3 py-1 rounded">
+                            <i class="fas fa-play-circle mr-1"></i>2个视频
+                        </div>
+                    </div>
+                    <div class="category-card-content">
+                        <h4 class="text-lg font-bold text-text-main mb-1">反拍</h4>
+                        <p class="text-text-sub text-sm">包括单手反拍、双手反拍及切削等技术视频</p>
+                    </div>
+                </div>
+
+                <div class="card-style card-hover overflow-hidden cursor-pointer" data-category="volley">
+                    <div class="h-48 bg-cover bg-center relative" style="background-image: url('images/volley-cover.jpg')">
+                        <div class="video-info-badge absolute bottom-2 right-2 bg-black/70 text-white text-sm px-3 py-1 rounded">
+                            <i class="fas fa-play-circle mr-1"></i>1个视频
+                        </div>
+                    </div>
+                    <div class="category-card-content">
+                        <h4 class="text-lg font-bold text-text-main mb-1">截击</h4>
+                        <p class="text-text-sub text-sm">包括正拍截击、反拍截击和高压截击技术</p>
+                    </div>
+                </div>
+
+                <div class="card-style card-hover overflow-hidden cursor-pointer" data-category="smash">
+                    <div class="h-48 bg-cover bg-center relative" style="background-image: url('images/smash-cover.png')">
+                        <div class="video-info-badge absolute bottom-2 right-2 bg-black/70 text-white text-sm px-3 py-1 rounded">
+                            <i class="fas fa-play-circle mr-1"></i>1个视频
+                        </div>
+                    </div>
+                    <div class="category-card-content">
+                        <h4 class="text-lg font-bold text-text-main mb-1">扣杀</h4>
+                        <p class="text-text-sub text-sm">包括原地扣杀、移动扣杀等高压球技术</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="videoPlayerModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center">
+                <div class="w-full max-w-4xl px-4">
+                    <div class="modal-content-bg relative bg-bg-panel rounded-xl overflow-hidden border border-border-color">
+                        <button id="closeVideoModal" class="absolute top-4 right-4 w-8 h-8 bg-black/50 hover:bg-primary-green/50 text-white rounded-full flex items-center justify-center z-10 transition-colors">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <video id="videoPlayer" class="w-full aspect-video" controls>
+                            您的浏览器不支持视频播放
+                        </video>
+                        <div class="p-4">
+                            <h3 id="videoPlayerTitle" class="text-xl font-bold text-text-main"></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="videosSection" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-text-main" id="videosSectionTitle">
+                        <i class="fas fa-film text-primary-green mr-2"></i>发球训练视频
+                    </h3>
+                    <button id="backToCategories" class="back-btn">
+                        <i class="fas fa-arrow-left mr-2"></i> 返回分类
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="videosGrid">
+                    </div>
+            </div>
+
+            <div id="loadingIndicator" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+                <div class="bg-bg-panel p-6 rounded-xl shadow-xl text-center border border-border-color">
+                    <div class="w-12 h-12 border-4 border-primary-green/30 border-t-primary-green rounded-full animate-spin mx-auto mb-4"></div>
+                    <p class="text-text-main">处理中，请稍候...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <aside id="mobileSidebar" class="fixed inset-0 bg-black/70 z-50 hidden lg:hidden">
+        <div class="w-3/4 max-w-xs h-full bg-bg-panel text-white p-4">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex items-center">
+                    <div class="text-2xl text-primary-green mr-2">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h2 class="text-lg font-bold">AI Coach Pro</h2>
+                </div>
+                <button id="closeMobileMenu" class="text-gray-400 hover:text-text-main">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <nav class="space-y-1">
+                <a href="home.html" class="sidebar-item">
+                    <i class="fas fa-home text-lg w-6 text-center"></i>
+                    <span class="ml-3">首页</span>
+                </a>
+                <a href="index.html" class="sidebar-item">
+                    <i class="fas fa-chart-line text-lg w-6 text-center"></i>
+                    <span class="ml-3">运动分析</span>
+                </a>
+                <a href="learning.html" class="sidebar-item sidebar-item-active">
+                    <i class="fas fa-book text-lg w-6 text-center"></i>
+                    <span class="ml-3">学习发现</span>
+                </a>
+                <a href="profile.html" class="sidebar-item">
+                    <i class="fas fa-user-circle text-lg w-6 text-center"></i>
+                    <span class="ml-3">个人中心</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 显示登录用户名（从本地存储获取）
+            const username = localStorage.getItem('username');
+            const usernameDisplay = document.getElementById('usernameDisplay');
+            if (username && usernameDisplay) {
+                usernameDisplay.textContent = username;
+            }
+
+            // 2. 移动端菜单控制
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileSidebar = document.getElementById('mobileSidebar');
+            const closeMobileMenu = document.getElementById('closeMobileMenu');
+            const dropdownToggle = document.getElementById('dropdownToggle');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+
+            // 打开移动端菜单
+            if (mobileMenuBtn && mobileSidebar) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileSidebar.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                });
+            }
+
+            // 关闭移动端菜单
+            const closeMenu = () => {
+                if (mobileSidebar) mobileSidebar.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            };
+
+            if (closeMobileMenu) closeMobileMenu.addEventListener('click', closeMenu);
+            if (mobileSidebar) {
+                mobileSidebar.addEventListener('click', (e) => {
+                    if (e.target === mobileSidebar) closeMenu();
+                });
+            }
+
+            // 3. 用户下拉菜单控制
+            if (dropdownToggle && dropdownMenu) {
+                dropdownToggle.addEventListener('click', () => {
+                    dropdownMenu.classList.toggle('hidden');
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (document.getElementById('userDropdown') && !document.getElementById('userDropdown').contains(e.target)) {
+                    if (dropdownMenu) dropdownMenu.classList.add('hidden');
+                }
+            });
+
+            // 4. 退出登录功能
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('username');
+                    window.location.href = 'login.html';
+                });
+            }
+
+            // 5. 视频分类与列表功能 (保持原有逻辑)
+            const categoryCards = document.querySelectorAll('[data-category]');
+            const videosSection = document.getElementById('videosSection');
+            const videosSectionTitle = document.getElementById('videosSectionTitle');
+            const videosGrid = document.getElementById('videosGrid');
+            const backToCategories = document.getElementById('backToCategories');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+
+            // 动作类型中文映射
+            const actionTypeMap = {
+                'serve': '发球',
+                'forehand': '正拍',
+                'backhand': '反拍',
+                'volley': '截击',
+                'smash': '扣杀'
+            };
+
+            // 视频数据
+            const videoData = {
+                // 1. 发球视频（3个示例）
+                serve: [
+                    {
+                        id: 1,
+                        title: '平击发球基础教学',
+                        duration: '01:31',
+                        thumbnail: 'images/serve1.jpg', // 视频封面
+                        uploadDate: '2025-10-25',
+                        videoUrl: 'videos/serve/serve1.mp4' // 视频路径
+                    },
+                    {
+                        id: 2,
+                        title: '上旋发球技巧与练习',
+                        duration: '00:58',
+                        thumbnail: 'images/serve2.jpg',
+                        uploadDate: '2025-10-10',
+                        videoUrl: 'videos/serve/serve2.mp4'
+                    },
+                    {
+                        id: 3,
+                        title: '职业选手发球慢动作解析',
+                        duration: '01:18',
+                        thumbnail: 'images/serve3.jpg',
+                        uploadDate: '2025-10-05',
+                        videoUrl: 'videos/serve/serve3.mp4'
+                    }
+                ],
+
+                // 2. 正拍视频（2个示例）
+                forehand: [
+                    {
+                        id: 10,
+                        title: '开放式正拍击球教学',
+                        duration: '03:43',
+                        thumbnail: 'images/forehand1.jpg',
+                        uploadDate: '2025-10-12',
+                        videoUrl: 'videos/forehand/forehand1.mp4'
+                    },
+                    {
+                        id: 11,
+                        title: '正手击球动力链1',
+                        duration: '04:01',
+                        thumbnail: 'images/forehand2.jpg',
+                        uploadDate: '2025-10-08',
+                        videoUrl: 'videos/forehand/forehand2.mp4'
+                    }
+                ],
+
+                // 3. 反拍视频
+                backhand: [
+                    {
+                        id: 20,
+                        title: '双手反拍-核心发力',
+                        duration: '04:24',
+                        thumbnail: 'images/backhand1.jpg',
+                        uploadDate: '2025-10-03',
+                        videoUrl: 'videos/backhand/backhand1.mp4'
+                    }
+                ],
+
+                // 4. 截击视频（1个示例）
+                volley: [
+                    {
+                        id: 30,
+                        title: '正确的网前截击意识',
+                        duration: '01:45',
+                        thumbnail: 'images/volley1.jpg',
+                        uploadDate: '2025-09-20',
+                        videoUrl: 'videos/volley/volley1.mp4'
+                    }
+                ],
+
+                // 5. 扣杀视频（1个示例）
+                smash: [
+                    {
+                        id: 40,
+                        title: '高压扣杀入门教学',
+                        duration: '00:15',
+                        thumbnail: 'images/smash1.jpg',
+                        uploadDate: '2025-09-15',
+                        videoUrl: 'videos/smash/smash1.mp4'
+                    }
+                ]
+            };
+
+            // 显示分类视频
+            function showCategoryVideos(category) {
+                loadingIndicator.classList.remove('hidden');
+
+                // 模拟加载延迟
+                setTimeout(() => {
+                    // 更新标题
+                    videosSectionTitle.innerHTML = `<i class="fas fa-film text-primary-green mr-2"></i>${actionTypeMap[category]}训练视频`;
+
+                    // 清空视频网格
+                    videosGrid.innerHTML = '';
+
+                    // 获取该分类下的视频
+                    const videos = videoData[category] || [];
+
+                    if (videos.length > 0) {
+                        videos.forEach(video => {
+                            const videoCard = document.createElement('div');
+                            videoCard.className = 'card-style overflow-hidden card-hover';
+                            videoCard.innerHTML = `
+                                <div class="relative h-40 bg-cover bg-center" style="background-image: url('${video.thumbnail}')">
+                                    <div class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                        ${video.duration}
+                                    </div>
+                                    <button class="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
+                                        <div class="w-12 h-12 bg-primary-green rounded-full flex items-center justify-center">
+                                            <i class="fas fa-play text-black"></i>
+                                        </div>
+                                    </button>
+                                </div>
+                                <div class="p-4">
+                                    <h4 class="text-text-main font-medium mb-1 line-clamp-1">${video.title}</h4>
+                                    <p class="text-text-sub text-sm">${video.uploadDate}</p>
+                                </div>
+                            `;
+
+                            // 视频点击事件
+                            videoCard.addEventListener('click', () => {
+                                const modal = document.getElementById('videoPlayerModal');
+                                const player = document.getElementById('videoPlayer');
+                                const title = document.getElementById('videoPlayerTitle');
+
+                                // 设置视频源和标题
+                                player.src = video.videoUrl;
+                                title.textContent = video.title;
+
+                                // 显示弹窗并播放
+                                modal.classList.remove('hidden');
+                                player.play();
+                                document.body.style.overflow = 'hidden';
+                            });
+
+                            // 关闭弹窗事件
+                            document.getElementById('closeVideoModal').addEventListener('click', () => {
+                                const modal = document.getElementById('videoPlayerModal');
+                                const player = document.getElementById('videoPlayer');
+
+                                player.pause();
+                                modal.classList.add('hidden');
+                                document.body.style.overflow = 'auto';
+                            });
+
+                            // 点击背景关闭弹窗
+                            document.getElementById('videoPlayerModal').addEventListener('click', (e) => {
+                                if (e.target === document.getElementById('videoPlayerModal')) {
+                                    document.getElementById('closeVideoModal').click();
+                                }
+                            });
+
+                            videosGrid.appendChild(videoCard);
+                        });
+                    } else {
+                        // 空状态
+                        videosGrid.innerHTML = `
+                            <div class="col-span-full py-16 text-center card-style">
+                                <div class="text-6xl text-text-sub/50 mb-4">
+                                    <i class="fas fa-film"></i>
+                                </div>
+                                <h4 class="text-text-main text-lg font-medium mb-2">暂无视频</h4>
+                                <p class="text-text-sub">该分类下还没有视频，上传第一个视频吧！</p>
+                            </div>
+                        `;
+                    }
+
+                    // 切换视图
+                    document.querySelector('.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-3').classList.add('hidden');
+                    videosSection.classList.remove('hidden');
+                    loadingIndicator.classList.add('hidden');
+                }, 800);
+            }
+
+            // 返回分类列表
+            function backToCategoriesView() {
+                videosSection.classList.add('hidden');
+                document.querySelector('.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-3').classList.remove('hidden');
+            }
+
+            // 事件监听
+            categoryCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const category = card.getAttribute('data-category');
+                    showCategoryVideos(category);
+                });
+            });
+
+            backToCategories.addEventListener('click', backToCategoriesView);
+        });
+    </script>
+</body>
+</html>

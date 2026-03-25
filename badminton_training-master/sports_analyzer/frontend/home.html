@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coach Pro - 首页</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --primary-green: #00ff88; /* 赛博霓虹绿 (Primary) */
+            --secondary-blue: #00ccff;
+            --danger-red: #ff4d4d;
+            --warning-yellow: #ffc107;
+            --text-main: #ffffff;
+            --text-sub: #a0a0a0;
+            --border-color: #333333;
+        }
+
+        /* 强制覆盖 Tailwind 默认样式，使用 CSS 变量实现 index.html 的布局 */
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+        }
+
+        /* 侧边栏布局 (模仿 index.html 的固定定位) */
+        .sidebar {
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100vh;
+            padding-top: 20px;
+            z-index: 1000;
+        }
+
+        /* 主内容区布局 (模仿 index.html 的偏移) */
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+            padding-top: 80px; /* 顶部留白，以防顶部导航栏被固定 */
+            min-height: 100vh;
+        }
+
+        /* 统一导航样式 (使用 CSS 类名) */
+        .sidebar-item {
+            color: var(--text-sub);
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar-item-active, .sidebar-item:hover {
+            color: var(--primary-green);
+            background: rgba(0, 255, 136, 0.05);
+            border-left-color: var(--primary-green);
+            text-decoration: none; /* 移除 a 标签下划线 */
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-dark': 'var(--bg-dark)',
+                        'bg-panel': 'var(--bg-panel)',
+                        'primary-green': 'var(--primary-green)',
+                        'secondary-blue': 'var(--secondary-blue)',
+                        'danger-red': 'var(--danger-red)',
+                        'warning-yellow': 'var(--warning-yellow)',
+                        'text-main': 'var(--text-main)',
+                        'text-sub': 'var(--text-sub)',
+                        'border-color': 'var(--border-color)',
+                    },
+                    fontFamily: {
+                        inter: ['Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-inter bg-bg-dark min-h-screen flex">
+    <aside class="sidebar hidden lg:block">
+        <div class="text-center mb-5">
+            <h4 class="text-xl font-bold text-text-main"><i class="fas fa-robot mr-2 text-secondary-blue"></i>AI Coach Pro</h4>
+            <small class="text-text-sub text-sm">v2.0.5 Ultimate</small>
+        </div>
+        <nav class="space-y-1">
+            <a href="home.html" class="sidebar-item sidebar-item-active">
+                <i class="fas fa-home text-lg w-6 text-center"></i>
+                <span class="ml-3">首页</span>
+            </a>
+            <a href="index.html" class="sidebar-item">
+                <i class="fas fa-chart-line text-lg w-6 text-center"></i>
+                <span class="ml-3">运动分析</span>
+            </a>
+            <a href="learning.html" class="sidebar-item">
+                <i class="fas fa-book text-lg w-6 text-center"></i>
+                <span class="ml-3">学习发现</span>
+            </a>
+            <a href="profile.html" class="sidebar-item">
+                <i class="fas fa-user-circle text-lg w-6 text-center"></i>
+                <span class="ml-3">个人中心</span>
+            </a>
+        </nav>
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-9xl text-white/5 rotate-12 opacity-5">
+            <i class="fas fa-table-tennis"></i>
+        </div>
+    </aside>
+
+    <header class="bg-bg-panel shadow-lg fixed top-0 left-0 right-0 z-[1001] lg:left-64 border-b border-border-color">
+        <div class="p-3 flex items-center justify-between lg:justify-end">
+            <div class="flex items-center lg:hidden">
+                <button id="mobileMenuBtn" class="text-text-main mr-3"><i class="fas fa-bars text-xl"></i></button>
+                <h1 class="text-lg font-bold text-text-main">AI Coach Pro</h1>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button class="text-text-sub hover:text-text-main transition-colors">
+                    <i class="fas fa-bell text-xl"></i>
+                </button>
+                <div class="flex items-center relative" id="userDropdown">
+                    <img src="https://picsum.photos/40/40" alt="用户头像" class="w-8 h-8 rounded-full object-cover border-2 border-primary-green/40">
+                    <span id="usernameDisplay" class="ml-2 text-text-main font-medium hidden sm:block">用户</span>
+                    <button id="dropdownToggle" class="ml-1 text-text-sub hover:text-text-main">
+                        <i class="fas fa-angle-down"></i>
+                    </button>
+                    <div id="dropdownMenu" class="absolute right-0 mt-2 w-48 bg-bg-panel rounded-md shadow-lg py-1 z-50 hidden border border-border-color">
+                        <a href="profile.html" class="block px-4 py-2 text-sm text-text-sub hover:bg-primary-green/10 hover:text-primary-green">个人中心</a>
+                        <a href="#" id="logoutBtn" class="block px-4 py-2 text-sm text-text-sub hover:bg-primary-green/10 hover:text-primary-green">退出登录</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content flex-1">
+        <div class="container mx-auto">
+            <div class="bg-bg-panel rounded-xl shadow-lg p-6 md:p-10 mb-8 relative overflow-hidden border border-border-color hover:border-primary-green transition-colors">
+                <div class="absolute top-0 right-0 text-9xl text-primary-green/10 z-0">
+                    <i class="fas fa-tennis-ball"></i>
+                </div>
+                <div class="relative z-10">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-text-main mb-2">
+                        欢迎进入 <span class="text-primary-green">AI Coach Pro</span>
+                    </h2>
+                    <p class="text-text-sub text-lg mb-6 max-w-full">
+                        在这里，您可以上传网球运动视频，AI智能识别动作关键点，获取专业分析报告，学习标准技术动作，全面提升您的网球水平
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <a href="index.html" class="bg-primary-green hover:bg-primary-green/90 text-dark font-medium py-3 px-6 rounded-lg transition-colors flex items-center shadow-md">
+                            <i class="fas fa-play-circle mr-2"></i> 开始运动分析
+                        </a>
+
+                        <a href="learning.html" class="bg-bg-panel border border-border-color hover:border-secondary-blue text-text-sub hover:text-secondary-blue font-medium py-3 px-6 rounded-lg transition-colors flex items-center shadow-sm">
+                            <i class="fas fa-book mr-2"></i> 查看教学视频
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-bg-panel rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-border-color hover:border-primary-green">
+                    <div class="w-14 h-14 bg-primary-green/10 rounded-xl flex items-center justify-center text-primary-green text-2xl mb-4">
+                        <i class="fas fa-video-camera"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-text-main mb-2">视频动作分析</h3>
+                    <p class="text-text-sub mb-4">
+                        上传您的网球运动视频，AI智能识别动作关键点，生成详细分析报告
+                    </p>
+                    <a href="index.html" class="text-primary-green font-medium hover:text-primary-green/80 transition-colors flex items-center">
+                        立即体验 <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+
+                <div class="bg-bg-panel rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-border-color hover:border-primary-green">
+                    <div class="w-14 h-14 bg-secondary-blue/10 rounded-xl flex items-center justify-center text-secondary-blue text-2xl mb-4">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-text-main mb-2">专业教学指导</h3>
+                    <p class="text-text-sub mb-4">
+                        海量专业网球教学视频，从基础动作到高级技巧，循序渐进提升水平
+                    </p>
+                    <a href="learning.html" class="text-primary-green font-medium hover:text-primary-green/80 transition-colors flex items-center">
+                        查看详情 <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+
+                <div class="bg-bg-panel rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-border-color hover:border-primary-green">
+                    <div class="w-14 h-14 bg-warning-yellow/10 rounded-xl flex items-center justify-center text-warning-yellow text-2xl mb-4">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-text-main mb-2">运动数据追踪</h3>
+                    <p class="text-text-sub mb-4">
+                        记录每次运动分析数据，生成进步曲线，直观了解您的技术提升历程
+                    </p>
+                    <a href="profile.html" class="text-primary-green font-medium hover:text-primary-green/80 transition-colors flex items-center">
+                        查看数据 <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <aside id="mobileSidebar" class="fixed inset-0 bg-black/70 z-[1002] hidden lg:hidden">
+        <div class="w-3/4 max-w-xs h-full bg-bg-panel text-white p-4">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex items-center">
+                    <div class="text-2xl text-primary-green mr-2">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h2 class="text-lg font-bold">AI Coach Pro</h2>
+                </div>
+                <button id="closeMobileMenu" class="text-gray-400 hover:text-text-main">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <nav class="space-y-1">
+                <a href="home.html" class="sidebar-item">
+                    <i class="fas fa-home text-lg w-6 text-center"></i>
+                    <span class="ml-3">首页</span>
+                </a>
+                <a href="index.html" class="sidebar-item sidebar-item-active">
+                    <i class="fas fa-chart-line text-lg w-6 text-center"></i>
+                    <span class="ml-3">运动分析</span>
+                </a>
+                <a href="learning.html" class="sidebar-item">
+                    <i class="fas fa-book text-lg w-6 text-center"></i>
+                    <span class="ml-3">学习发现</span>
+                </a>
+                <a href="profile.html" class="sidebar-item">
+                    <i class="fas fa-user-circle text-lg w-6 text-center"></i>
+                    <span class="ml-3">个人中心</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 显示登录用户名（从本地存储获取）
+            const username = localStorage.getItem('username');
+            const usernameDisplay = document.getElementById('usernameDisplay');
+
+            if (username && usernameDisplay) {
+                usernameDisplay.textContent = username;
+            }
+
+            // 2. 移动端菜单控制
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileSidebar = document.getElementById('mobileSidebar');
+            const closeMobileMenu = document.getElementById('closeMobileMenu');
+            const dropdownToggle = document.getElementById('dropdownToggle');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+
+            // 打开移动端菜单
+            if (mobileMenuBtn && mobileSidebar) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileSidebar.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                });
+            }
+
+            // 关闭移动端菜单
+            const closeMenu = () => {
+                if (mobileSidebar) mobileSidebar.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            };
+
+            if (closeMobileMenu) closeMobileMenu.addEventListener('click', closeMenu);
+            if (mobileSidebar) {
+                mobileSidebar.addEventListener('click', (e) => {
+                    if (e.target === mobileSidebar) {
+                        closeMenu();
+                    }
+                });
+            }
+
+            // 3. 用户下拉菜单控制
+            if (dropdownToggle && dropdownMenu) {
+                dropdownToggle.addEventListener('click', () => {
+                    dropdownMenu.classList.toggle('hidden');
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (document.getElementById('userDropdown') && !document.getElementById('userDropdown').contains(e.target)) {
+                    if (dropdownMenu) dropdownMenu.classList.add('hidden');
+                }
+            });
+
+            // 4. 退出登录功能
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('username');
+                    window.location.href = 'login.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

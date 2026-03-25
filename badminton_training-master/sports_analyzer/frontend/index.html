@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Pro Tennis Analytics Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* === 全局深色主题变量 === */
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --primary-green: #00ff88; /* 赛博霓虹绿 */
+            --secondary-blue: #00ccff;
+            --danger-red: #ff4d4d;
+            --warning-yellow: #ffc107;
+            --text-main: #ffffff;
+            --text-sub: #a0a0a0;
+            --border-color: #333333;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* === 布局组件 === */
+        .sidebar {
+            height: 100vh;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            padding-top: 20px;
+            z-index: 1000;
+        }
+
+        /* 左上角 Logo 文本样式，保持与其他页面一致 */
+        .sidebar-title {
+            font-size: 1.25rem;      /* Tailwind text-xl */
+            line-height: 1.75rem;
+            font-weight: 700;        /* Tailwind font-bold */
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .sidebar-title i {
+            color: var(--secondary-blue);
+            margin-right: 0.5rem;    /* Tailwind mr-2 */
+        }
+
+        .sidebar-version {
+            color: var(--text-sub);
+            font-size: 0.875rem;     /* Tailwind text-sm */
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+            padding-top: 80px;
+            min-height: 100vh;
+        }
+
+        /* === 导航菜单（与其他页面统一） === */
+        .sidebar-nav .nav-link {
+            color: var(--text-sub);
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+            border-radius: 0;
+            text-decoration: none;
+        }
+
+        .sidebar-nav .nav-link:hover,
+        .sidebar-nav .nav-link.active {
+            color: var(--primary-green);
+            background: rgba(0, 255, 136, 0.05);
+            border-left-color: var(--primary-green);
+        }
+
+        .sidebar-nav .nav-link i {
+            width: 1.5rem;          /* 等同 Tailwind w-6 */
+            text-align: center;
+            margin-right: 0.75rem;  /* 等同 Tailwind ml-3 */
+            font-size: 1.125rem;    /* 等同 Tailwind text-lg */
+        }
+
+        /* === 视频播放器容器 === */
+        .video-container {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            aspect-ratio: 16/9;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .overlay-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.7);
+            transition: opacity 0.5s;
+        }
+
+        /* === 仪表盘卡片 === */
+        .stat-card {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 20px;
+            height: 100%;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-green);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-green);
+        }
+
+        .stat-label {
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* === AI 报告样式 === */
+        .problem-item {
+            border-left: 3px solid var(--danger-red);
+            background: rgba(255, 77, 77, 0.05);
+            margin-bottom: 8px;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .drill-card {
+            background: linear-gradient(145deg, #2a2a2a, #222);
+            border: 1px solid #333;
+            border-left: 4px solid var(--secondary-blue);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+        }
+
+        .drill-card:hover {
+            background: #333;
+        }
+
+        /* === 底部控制台 === */
+        .console-log {
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 8px;
+            height: 150px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            border: 1px solid #333;
+        }
+
+        /* === 加载动画 === */
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: var(--primary-green);
+            position: absolute;
+            top: 0;
+            animation: scan 2s infinite linear;
+            box-shadow: 0 0 10px var(--primary-green);
+        }
+
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+
+        /* === 提升暗色背景下文字可读性 === */
+        .text-muted {
+            color: #d0d0d0 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="text-center mb-5">
+            <h4 class="sidebar-title"><i class="fas fa-robot"></i>AI Coach Pro</h4>
+            <small class="sidebar-version">v2.0.5 Ultimate</small>
+        </div>
+        <!-- 左侧导航：与其他页面一致，支持页面跳转 -->
+        <nav class="nav flex-column sidebar-nav">
+            <a class="nav-link" href="home.html">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a class="nav-link active" href="index.html">
+                <i class="fas fa-chart-line"></i>
+                <span>运动分析</span>
+            </a>
+            <a class="nav-link" href="learning.html">
+                <i class="fas fa-book"></i>
+                <span>学习发现</span>
+            </a>
+            <a class="nav-link" href="profile.html">
+                <i class="fas fa-user-circle"></i>
+                <span>个人中心</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold">训练概览</h2>
+                <p class="text-muted">AI 视觉分析系统已就绪，等待输入。</p>
+            </div>
+            <div class="d-flex gap-3">
+                <input type="file" id="videoInput" class="d-none" accept="video/*" onchange="handleFileSelect(event)">
+                <button class="btn btn-outline-light" onclick="document.getElementById('videoInput').click()">
+                    <i class="fas fa-upload me-2"></i>选择视频
+                </button>
+                <button class="btn btn-primary" onclick="startAnalysis()" style="background: var(--primary-green); border:none; color:#000; font-weight:bold;">
+                    <i class="fas fa-play me-2"></i>开始 AI 分析
+                </button>
+            </div>
+        </div>
+
+        <div id="dashboard-view">
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">综合评分</div>
+                        <div class="stat-value" id="overallScore">--</div>
+                        <div class="text-muted small mt-2"><i class="fas fa-chart-bar text-success"></i> 满分 100</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">动作等级</div>
+                        <div class="stat-value" style="font-size: 2rem;" id="levelTag">--</div>
+                        <div class="text-muted small mt-2">基于职业模型对比</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">关键偏差</div>
+                        <div class="stat-value text-danger" id="issueCount">0</div>
+                        <div class="text-muted small mt-2">需重点修复的关节</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">处理状态</div>
+                        <div class="stat-value" style="color: var(--secondary-blue); font-size: 1.8rem;" id="systemStatus">Ready</div>
+                        <div class="text-muted small mt-2">GPU 实时计算</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="video-container">
+                        <video id="mainPlayer" controls></video>
+                        <div id="uploadOverlay" class="overlay-layer">
+                            <div class="text-center">
+                                <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-white-50"></i>
+                                <h5>请上传击球视频</h5>
+                                <p class="text-white-50 small">支持 MP4, MOV, AVI (建议 720p 30fps)</p>
+                            </div>
+                        </div>
+                        <div id="loadingOverlay" class="overlay-layer" style="display: none;">
+                            <div class="text-center">
+                                <div class="scan-line"></div>
+                                <h4 class="text-white mb-2">AI 正在逐帧解析...</h4>
+                                <p class="text-primary small" id="loadingText">初始化神经网络...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <h6 class="text-muted text-uppercase mb-2">System Console</h6>
+                        <div class="console-log" id="consoleLog">
+                            <div>[SYSTEM] Core modules initialized.</div>
+                            <div>[SYSTEM] Waiting for user input...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="stat-card">
+                        <ul class="nav nav-tabs border-bottom-0 mb-3" id="aiTabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#tab-radar">能力图谱</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#tab-advice">AI 教练建议</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#tab-data">骨骼数据</a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="tab-radar">
+                                <canvas id="radarChart" style="max-height: 250px;"></canvas>
+                                <div class="mt-4">
+                                    <h6 class="text-white mb-3">关键指标解析：</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">角度控制 (Angle)</span>
+                                        <span class="text-success" id="dimAngle">--</span>
+                                    </div>
+                                    <div class="progress mb-3" style="height: 6px; background: #333;">
+                                        <div class="progress-bar bg-success" id="barAngle" style="width: 0%"></div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">动作流畅度 (Fluidity)</span>
+                                        <span class="text-info" id="dimFluid">--</span>
+                                    </div>
+                                    <div class="progress mb-3" style="height: 6px; background: #333;">
+                                        <div class="progress-bar bg-info" id="barFluid" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="tab-advice" style="height: 400px; overflow-y: auto; padding-right: 5px;">
+                                <div id="aiFeedbackContent">
+                                    <div class="text-center mt-5 text-muted">
+                                        <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                                        <p>暂无分析数据，请开始分析</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="tab-data" style="height: 400px; overflow-y: auto;">
+                                <table class="table table-dark table-sm table-hover text-center align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>关节</th>
+                                            <th>用户</th>
+                                            <th>偏差</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="jointTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let chartInstance = null;
+
+        // 初始化雷达图
+        function initCharts() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['角度控制', '身体平衡', '动作流畅', '左右对称', '节奏感'],
+                    datasets: [{
+                        label: '当前表现',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(0, 255, 136, 0.2)',
+                        borderColor: '#00ff88',
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#00ff88',
+                        pointHoverBackgroundColor: '#fff'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: { color: '#333' },
+                            grid: { color: '#333' },
+                            pointLabels: { color: '#fff', font: { size: 12 } },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // 1. 文件选择
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                const video = document.getElementById('mainPlayer');
+                video.src = url;
+                document.getElementById('uploadOverlay').style.display = 'none';
+                logToConsole(`Video loaded: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`);
+                document.getElementById('systemStatus').innerText = "Ready";
+                document.getElementById('systemStatus').style.color = "#00ccff";
+            }
+        }
+
+        // 2. 开始分析
+        async function startAnalysis() {
+            const fileInput = document.getElementById('videoInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("请先选择视频文件！");
+                return;
+            }
+
+            // UI 状态更新
+            document.getElementById('loadingOverlay').style.display = 'block';
+            document.getElementById('systemStatus').innerText = "Analyzing...";
+            document.getElementById('systemStatus').style.color = "#ffc107";
+
+            logToConsole("Initiating backend analysis pipeline...");
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // 模拟进度日志
+                let steps = 0;
+                const progressInterval = setInterval(() => {
+                    const msgs = [
+                        "Executing YOLOv8 detection...",
+                        "Extracting skeleton keypoints...",
+                        "Comparing with Pro Database (DTW)...",
+                        "Generating AI Prompt...",
+                        "Calling DeepSeek API..."
+                    ];
+                    if (steps < msgs.length) {
+                        logToConsole(msgs[steps]);
+                        document.getElementById('loadingText').innerText = msgs[steps];
+                        steps++;
+                    }
+                }, 1000);
+
+                // 发起请求
+                const response = await fetch(`${API_BASE}/api/v1/analysis/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+                const data = await response.json();
+
+                logToConsole("Analysis complete. Rendering results.");
+                document.getElementById('systemStatus').innerText = "Done";
+                document.getElementById('systemStatus').style.color = "#00ff88";
+
+                // 渲染数据
+                renderFullReport(data);
+
+            } catch (error) {
+                console.error(error);
+                logToConsole(`CRITICAL ERROR: ${error.message}`);
+                alert("分析失败: " + error.message);
+                document.getElementById('systemStatus').innerText = "Error";
+                document.getElementById('systemStatus').style.color = "#ff4d4d";
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        // 3. 渲染主函数
+        // 3. 渲染主函数（方案 B 版本）
+function renderFullReport(data) {
+    // A. 视频回显
+    if (data.video_url) {
+        const video = document.getElementById('mainPlayer');
+        video.src = data.video_url;
+        video.play();
+        logToConsole("Visualized video stream active.");
+    }
+
+    // B. 提取 AI 深度数据 & 职业对比关节数据
+    let feedback = null;
+    let jointDataForTable = null;
+
+    if (data.deep_analysis && data.deep_analysis.length > 0) {
+        // 默认展示第一个击球片段
+        const shot = data.deep_analysis[0];
+        feedback = shot.ai_feedback;
+        logToConsole(`Rendered analysis for: ${shot.type} (Sim: ${shot.similarity_score}%)`);
+
+        // ★ 方案 B：优先使用职业对比模块给出的 joint_details
+        if (Array.isArray(shot.joint_details) && shot.joint_details.length > 0) {
+            jointDataForTable = shot.joint_details;
+        }
+    } else {
+        // 没有 deep_analysis 时的兜底
+        feedback = {
+            overall_score: data.overall_score || 0,
+            level: data.level || "N/A",
+            motivation: "未能识别有效击球动作"
+        };
+    }
+
+    // 如果 deep_analysis 里没有 joint_details，就退回顶层 joint_data（向下兼容）
+    if (!jointDataForTable && Array.isArray(data.joint_data)) {
+        jointDataForTable = data.joint_data;
+    }
+
+    // C. 填充各区域
+    updateCounter('overallScore', feedback.overall_score || 0);
+    document.getElementById('levelTag').innerText = feedback.level || "--";
+    document.getElementById('issueCount').innerText = (feedback.improvements || []).length;
+
+    // D. 图表
+    const dims = feedback.dimensions || { angle: 0.7, balance: 0.7, fluidity: 0.7, symmetry: 0.8 };
+    updateRadarChart(dims);
+
+    // E. AI 教练建议
+    renderAdviceList(feedback);
+
+    // F. 骨骼数据表（方案 B：用 joint_details / joint_data）
+    if (jointDataForTable) {
+        renderJointTable(jointDataForTable);
+    }
+}
+
+
+        // 4. 升级版 AI 建议渲染
+        function renderAdviceList(fb) {
+            const container = document.getElementById('aiFeedbackContent');
+            let html = '';
+
+            if (fb.motivation) {
+                html += `<div class="alert alert-info border-0 bg-opacity-10 text-white mb-4">
+                            <i class="fas fa-quote-left me-2 text-info"></i>
+                            <span class="fst-italic">${fb.motivation}</span>
+                         </div>`;
+            }
+
+            if (fb.strengths && fb.strengths.length > 0) {
+                html += '<h6 class="text-success mb-3"><i class="fas fa-check-circle me-2"></i>表现优秀的关节</h6>';
+                html += '<div class="d-flex flex-wrap gap-2 mb-4">';
+                fb.strengths.forEach(text => {
+                    html += `<span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-3 py-2">
+                                <i class="fas fa-star me-1"></i> ${text}
+                             </span>`;
+                });
+                html += '</div>';
+            }
+
+            if (fb.improvements && fb.improvements.length > 0) {
+                html += '<h6 class="text-danger mb-3"><i class="fas fa-exclamation-triangle me-2"></i>核心问题诊断</h6>';
+                fb.improvements.forEach(text => {
+                    html += `<div class="problem-item">${text}</div>`;
+                });
+                html += '<div class="mb-4"></div>';
+            }
+
+            if (fb.suggestions && fb.suggestions.length > 0) {
+                html += '<h6 class="text-primary mb-3"><i class="fas fa-dumbbell me-2"></i>专项纠正训练</h6>';
+                fb.suggestions.forEach(sugg => {
+                    html += `
+                        <div class="drill-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong class="text-white">${sugg.title}</strong>
+                                <span class="badge bg-dark border border-secondary text-muted">
+                                    <i class="far fa-clock me-1"></i>${sugg.duration || '10min'}
+                                </span>
+                            </div>
+                            <p class="text-muted small mb-0">${sugg.description}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            if (fb.action_plan && fb.action_plan.details) {
+                html += '<h6 class="text-warning mt-4 mb-3"><i class="fas fa-calendar-alt me-2"></i>下周训练重点</h6>';
+                html += `<div class="p-3 rounded" style="background: rgba(255, 193, 7, 0.05); border: 1px dashed #666;">
+                            <div class="mb-2"><strong class="text-warning">核心目标:</strong> <span class="text-white">${fb.action_plan.focus || '巩固基础'}</span></div>
+                            <ul class="mb-0 ps-3 text-white-50 small" style="list-style-type: square;">`;
+
+                if (Array.isArray(fb.action_plan.details)) {
+                    fb.action_plan.details.forEach(plan => {
+                        html += `<li class="mb-1">${plan}</li>`;
+                    });
+                }
+                html += `   </ul>
+                         </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+// 5. 表格渲染（方案B：优先使用 similarity.py 里的 pro_angle）
+// 5. 表格渲染：只保留 关节 / 用户 / 偏差 三列
+function renderJointTable(jointData) {
+    const tbody = document.getElementById('jointTableBody');
+    tbody.innerHTML = '';
+
+    if (!Array.isArray(jointData) || jointData.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td colspan="3" class="text-center text-muted py-3">
+                暂无骨骼数据
+            </td>`;
+        tbody.appendChild(tr);
+        return;
+    }
+
+    jointData.forEach(j => {
+        const tr = document.createElement('tr');
+
+        // 关节名
+        const jointName = j.joint_name || j.name || '--';
+
+        // 用户角度（兼容数字和字符串）
+        const angNum = Number(j.angle);
+        const userAngle = Number.isNaN(angNum) ? '0.0' : angNum.toFixed(1);
+
+        // 偏差（deviation 或 deviation_angle）
+        const devRaw = (typeof j.deviation !== 'undefined')
+            ? j.deviation
+            : j.deviation_angle;
+        const devNum = Number(devRaw);
+        const devAbs = Math.abs(devNum);
+
+        let colorClass = '';
+        let statusIcon = '';
+
+        if (!Number.isNaN(devNum)) {
+            if (devAbs > 15) {
+                colorClass = 'text-danger fw-bold';
+                statusIcon = '⚠️';
+            } else if (devAbs < 5) {
+                colorClass = 'text-success';
+                statusIcon = '✅';
+            }
+        }
+
+        tr.innerHTML = `
+            <td>${jointName}</td>
+            <td>${userAngle}°</td>
+            <td class="${colorClass}">
+                ${Number.isNaN(devNum) ? '--' : devNum.toFixed(1) + '°'}
+                ${statusIcon}
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+
+function buildDeviationBadge(devNum) {
+    if (Number.isNaN(devNum)) {
+        return '<span class="text-muted">--</span>';
+    }
+
+    const absVal = Math.abs(devNum);
+    let cls = 'text-success';
+    let icon = '<i class="fas fa-check-square ms-1"></i>';
+
+    if (absVal > 20) {
+        cls = 'text-danger';
+        icon = '<i class="fas fa-exclamation-triangle text-warning ms-1"></i>';
+    } else if (absVal > 10) {
+        cls = 'text-warning';
+        icon = '<i class="fas fa-exclamation-circle text-warning ms-1"></i>';
+    }
+
+    return `<span class="${cls}">${devNum.toFixed(1)}°${icon}</span>`;
+}
+
+
+
+        // 6. 图表更新
+        function updateRadarChart(dims) {
+            const data = [
+                (dims.angle || 0.7) * 100,
+                (dims.balance || 0.7) * 100,
+                (dims.fluidity || 0.7) * 100,
+                (dims.symmetry || 0.8) * 100,
+                80 // 节奏感预设
+            ];
+
+            chartInstance.data.datasets[0].data = data;
+            chartInstance.update();
+
+            document.getElementById('dimAngle').innerText = data[0].toFixed(0);
+            document.getElementById('barAngle').style.width = data[0] + '%';
+            document.getElementById('dimFluid').innerText = data[2].toFixed(0);
+            document.getElementById('barFluid').style.width = data[2] + '%';
+        }
+
+        function updateCounter(id, target) {
+            let current = 0;
+            const el = document.getElementById(id);
+            const timer = setInterval(() => {
+                if (current >= target) {
+                    clearInterval(timer);
+                    el.innerText = target;
+                } else {
+                    current += 2;
+                    if (current > target) current = target;
+                    el.innerText = current;
+                }
+            }, 20);
+        }
+
+        function logToConsole(msg) {
+            const consoleEl = document.getElementById('consoleLog');
+            const time = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.innerHTML = `<span style="color:#555;">[${time}]</span> ${msg}`;
+            consoleEl.prepend(line);
+        }
+
+        function switchTab(tab) {
+            console.log("Tab switched:", tab);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            logToConsole("Frontend ready. Waiting for user interaction.");
+        });
+
+    </script>
+</body>
+</html>
