@@ -1,0 +1,28 @@
+# 忽略 Python 虚拟环境
+venv/
+.venv/
+__pycache__/
+
+# 忽略 AI 模型权重 (这些太大了，不能传 Git)
+*.pth
+*.pt
+*.onnx
+*.safetensors
+*.bin
+*.h5
+models/
+weights/
+
+# 忽略视频和数据集 (这些也太大了)
+*.mp4
+*.avi
+*.mov
+*.jpg
+*.png
+data/
+datasets/
+videos/
+
+# 忽略 IDE 配置
+.idea/
+.vscode/
